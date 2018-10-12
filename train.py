@@ -32,6 +32,7 @@ from donkeycar.parts.datastore import Tub
 from donkeycar.parts.keras import KerasLinear, KerasIMU,\
      KerasCategorical, KerasBehavioral, Keras3D_CNN,\
      KerasRNN_LSTM
+#from nickpilots import KerasStreamline
 from donkeycar.parts.augment import augment_image
 from donkeycar.utils import *
 
@@ -312,7 +313,10 @@ def train(cfg, tub_names, model_name, transfer_model, model_type, continuous, au
     
     gen_records = {}
     opts = {}
-
+    
+    #if model_type == "streamline":
+    #    kl = KerasStreamline()
+    #else:
     kl = get_model_by_type(model_type, cfg=cfg)
 
     opts['categorical'] = type(kl) in [KerasCategorical, KerasBehavioral]
@@ -389,6 +393,7 @@ def train(cfg, tub_names, model_name, transfer_model, model_type, continuous, au
 
             has_imu = type(kl) is KerasIMU
             has_bvh = type(kl) is KerasBehavioral
+            #is_streamline = type(kl) is KerasStreamline
 
             for key in keys:
 
@@ -446,10 +451,15 @@ def train(cfg, tub_names, model_name, transfer_model, model_type, continuous, au
 
                     if img_arr is None:
                         continue
-
-                    img_arr = np.array(inputs_img).reshape(batch_size,\
-                        cfg.IMAGE_H, cfg.IMAGE_W, cfg.IMAGE_DEPTH)
-
+                    
+                    #if is_streamline: 
+                    #    img_arr = np.array(inputs_img).reshape(batch_size,\
+                    #        cfg.STREAMLINE_IMAGE_H, cfg.STREAMLINE_IMAGE_W, 1)
+                    else:
+                        img_arr = np.array(inputs_img).reshape(batch_size,\
+                            cfg.IMAGE_H, cfg.IMAGE_W, cfg.IMAGE_DEPTH)
+                     
+                    
                     if has_imu:
                         X = [img_arr, np.array(inputs_imu)]
                     elif has_bvh:
@@ -465,7 +475,6 @@ def train(cfg, tub_names, model_name, transfer_model, model_type, continuous, au
                     yield X, y
 
                     batch_data = []
-
 
     model_path = os.path.expanduser(model_name)
 

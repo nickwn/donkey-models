@@ -26,6 +26,8 @@ import numpy as np
 from donkeycar.parts.throttle_filter import ThrottleFilter
 from donkeycar.parts.behavior import BehaviorPart
 from donkeycar.parts.file_watcher import FileWatcher
+from my_joystick import MyJoystickController
+#from nick_pilots import KerasStreamline
 
 def drive(cfg, model_path=None, use_joystick=False, model_type=None, camera_type='single'):
     '''
@@ -43,7 +45,10 @@ def drive(cfg, model_path=None, use_joystick=False, model_type=None, camera_type
             model_type = "behavior"
         else:
             model_type = "categorical"
-    
+
+    if model_type == "streamline":
+        camera_type = "streamline"
+
     #Initialize car
     V = dk.vehicle.Vehicle()
 
@@ -90,6 +95,12 @@ def drive(cfg, model_path=None, use_joystick=False, model_type=None, camera_type
         V.add(image_sterero_pair_part, inputs=['cam/image_array_a', 'cam/image_array_b'], 
             outputs=['cam/image_array'])
 
+    #elif camera_type == "streamline":
+    #    print("using grayscale pi cam")
+    #    assert(cfg.CAMERA_TYPE == "PICAM")
+    #    from donkeycar.parts.camera import PiCamera
+    #    cam = PiCamera(image_w=cfg.STREAMLINE_IMAGE_W, image_h=cfg.STREAMLINE_IMAGE_H, image_d=1)
+
     else:
         
         print("cfg.CAMERA_TYPE", cfg.CAMERA_TYPE)
@@ -112,7 +123,8 @@ def drive(cfg, model_path=None, use_joystick=False, model_type=None, camera_type
         #modify steering_scale lower than 1.0 to have less responsive steering
         from donkeycar.parts.controller import PS3JoystickController, PS4JoystickController
         
-        cont_class = PS3JoystickController
+        #cont_class = PS3JoystickController
+        cont_class = MyJoystickController
 
         if cfg.CONTROLLER_TYPE == "ps4":
             cont_class = PS4JoystickController
@@ -293,6 +305,9 @@ def drive(cfg, model_path=None, use_joystick=False, model_type=None, camera_type
 
     if model_path:
         #When we have a model, first create an appropriate Keras part
+        #if model_type == "streamline":
+            #kl = KerasStreamline()
+        #else:
         kl = dk.utils.get_model_by_type(model_type, cfg)
 
         if '.h5' in model_path:
